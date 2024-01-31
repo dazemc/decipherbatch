@@ -1,0 +1,64 @@
+cryptools = include_lib("/lib/crypto.so")
+if not cryptools then exit("Error: Missing crypto library")
+
+computer = get_shell.host_computer
+folderPath = current_path
+computer.touch(folderPath, "Banks.txt")
+banks = computer.File("Banks.txt")
+computer.touch(folderPath, "BanksDeciphered.txt")
+banksDeciphered = computer.File("BanksDeciphered.txt")
+folder = computer.File(folderPath)
+folders = folder.get_folders
+
+//Gets bank info while in parent dir and saves it to Banks.txt
+for folder in folders
+	if folder.name[0] != "." then
+		//print(folder.name)
+		bank = current_path + "/" + folder.name + "/Config/Bank.txt"
+		bankFile = computer.File(bank)
+		bankContents = bankFile.get_content
+		currentContents = banks.get_content
+		computer.File("Banks.txt").set_content(currentContents + bankContents + char(10))
+
+	end if
+end for
+
+file = banks //lazy
+if not file then exit("decipher: can't find " + file)
+if file.is_binary then exit("decipher: can't read " + file + ". Binary file")
+if not file.has_permission("r") then exit("decipher: can't read file. Permission denied")
+if file.get_content.len == 0 then exit("decipher: no users found")
+
+lines = file.get_content.split("\n")
+lines = lines[:lines.len -1] //remove newline
+password = null
+
+	if params.len == 0 then
+		option = ""
+		inputOk = false
+		while( not inputOk )
+			option = user_input(lines.len + " passwords found." + char(10) + "Press enter to continue or 'q' to quit.")
+			if option != "q" then
+				inputOk = true
+			else
+				exit()
+			end if
+		end while
+	else
+		if params.len == 1 and params[0] != "-f" then //Replace with list of params
+			print("Unrecognized flag")
+		end if
+	end if
+
+
+	count = 1
+	for line in lines
+		print("Deciphered " + count + "/" + lines.len)	//No clue why this runs after the code below
+		count = count + 1
+		userPass = line.split(":")
+		password = cryptools.decipher(userPass[1])
+		currentPasswords = banksDeciphered.get_content
+		computer.File("BanksDeciphered.txt").set_content(currentPasswords + userPass[0] + ":" + password + char(10))
+	end for
+
+print("Finished! Password(s) saved to BanksDeciphered.txt")
