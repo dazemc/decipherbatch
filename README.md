@@ -1,5 +1,5 @@
 Only works on banks for now,
--f will immediatley start deciphering
+-f will immediatley start deciphering.
 Must be run while in /home
 
 Cheetsheet 
